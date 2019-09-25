@@ -29,11 +29,8 @@ class ProductFinder(tk.Frame):
         
         #3. Declaring buttons
             #Take photo button
-        self.photoButton = tk.Button(self.videoFrame,text="Take Photo",command=self.takePhoto,height=3,width=35)
+        self.photoButton = tk.Button(self.videoFrame,text="Take Photo",command=self.takePhoto,height=3,width=80)
         self.photoButton.pack(side="left",padx=12,pady=5)
-            #Quit Button
-        self.quitButton = tk.Button(self.videoFrame, text="Quit", command=self.master.destroy,height=3,width=35)
-        self.quitButton.pack(side="left",padx=10,pady=5)
 
         #4. Product Details Labels
             #ProductName
