@@ -28,7 +28,8 @@ class ProductFinder(tk.Frame):
         self.productDetailsFrame.pack(side="left",padx=10,pady=10)
         
         #3. Declaring buttons
-            #Take photo button
+            #Button to take a photo and this button also calls other functions which passes the image to the
+            #the inference model and updates the labels of the product details frame
         self.photoButton = tk.Button(self.videoFrame,text="Take Photo",command=self.takePhoto,height=3,width=80)
         self.photoButton.pack(side="left",padx=12,pady=5)
 
