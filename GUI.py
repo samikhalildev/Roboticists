@@ -66,7 +66,6 @@ class ProductFinder(tk.Frame):
     def takePhoto(self):
         img_name = "captured_photo.png"
         self.capturedImage = cv2.imwrite(img_name, self.frame)
-        '''self.capturedImage = cv2.imencode('.png',self.frame)'''
     
 root = tk.Tk()
 root.geometry("1000x600")
