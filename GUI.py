@@ -1,7 +1,7 @@
 import tkinter as tk
 from PIL import ImageTk, Image
 import cv2
-import ProductDetails
+from ProductDetails import *
 
 class ProductFinder(tk.Frame):
     
@@ -37,16 +37,16 @@ class ProductFinder(tk.Frame):
 
         #4. Product Details Labels
             #ProductName
-        self.productName = tk.Label(self.productDetailsFrame,text="Product Name")
+        self.productName = tk.Label(self.productDetailsFrame,text=ProductDetails.chocolate['productName'])
         self.productName.pack(padx=20,pady=15)
             #ProductPrice
-        self.productPrice = tk.Label(self.productDetailsFrame,text="Product Price")
+        self.productPrice = tk.Label(self.productDetailsFrame,text=ProductDetails.chocolate['productPrice'])
         self.productPrice.pack(padx=20,pady=15)
             #Aisle Number
-        self.aisleNumber = tk.Label(self.productDetailsFrame,text="Aisle")
+        self.aisleNumber = tk.Label(self.productDetailsFrame,text=ProductDetails.chocolate['aisleNumber'])
         self.aisleNumber.pack(padx=20,pady=15)
             #Quantity
-        self.productQuantity = tk.Label(self.productDetailsFrame,text="Quantity")
+        self.productQuantity = tk.Label(self.productDetailsFrame,text=ProductDetails.chocolate['productStock'])
         self.productQuantity.pack(padx=20,pady=15)
 
     #A method that displays the live camera stream and updates the label of videoFrame widget
