@@ -62,9 +62,9 @@ class ProductFinder(tk.Frame):
         self.videoLabel.configure(image=imgtk)
         self.videoLabel.after(1, self.camera_stream)
 
-    #This function captures a single frame once the photoButton widget is clicked
+    #This function captures a single frame saves it and overrides the existing file when clicked
     def takePhoto(self):
-        img_name = "open111_frame_{}.png"
+        img_name = "captured_photo.png"
         self.capturedImage = cv2.imwrite(img_name, self.frame)
         '''self.capturedImage = cv2.imencode('.png',self.frame)'''
     
