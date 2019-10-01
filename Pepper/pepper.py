@@ -6,15 +6,32 @@ from constants import SCAN_ITEM, LOOKING, items, synonyms
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
+from PIL import Image
+from io import BytesIO
+
 import cv2
+import pickle
+import base64
+import threading
+
+''' 
+    How to use robot:
+    - You can greet the robot by saying one of these words: [hi hello hey "hey pepper" "hi pepper" howdy]
+    - Find an item by saying: ${item name} OR "looking for $[item name}" OR "scan item"
+    - You may use the tablet to interact with the robot.
+'''
 
 # Connect robot
 session = qi.Session()
 robot_ip = '192.168.1.31:9559'
-virtual_robot = 'localhost:37677'
+virtual_robot = 'localhost:32913'
 
 session.connect('tcp://' + virtual_robot)
 plt.show()
+
+waiting_for_user = True
 
 # Use Pepper services
 tts = session.service("ALTextToSpeech")
@@ -44,6 +61,8 @@ def getItemDetails(item):
     # displayDetailsOnTablet(st1, st2)
 
 def displayDetailsOnTablet(st1, st2):
+    #html = '<h1>{0}</h1><p style="text-align: center">{1}</p>'.format(st1, st2)
+    #magic_tablet.html()
     magic_tablet.show(magic_tablet.animation("TICK"), st1, st2) 
     answer = magic_tablet.ask([(True, "Find another item"), (False, "thank you")])
     
@@ -52,9 +71,10 @@ def displayDetailsOnTablet(st1, st2):
     
     if answer:
         magic_tablet.show(magic_tablet.animation("UNCROSS_HANDS"), "Please scan or tell me another item", [])
+        waiting_for_user = True
+        getImageEverySec()
     else:
         magic_tablet.show(magic_tablet.animation("UNCROSS_HANDS"), "Goodbye!", [])
-
 
 def get_frame(proxy, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
     if not proxy.isCameraOpen(camera_idx):
@@ -76,7 +96,7 @@ def get_frame(proxy, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
     )
     
     np_image = None
-    
+
     try:
         timeout = 3
         start_time = time.time()
@@ -86,16 +106,31 @@ def get_frame(proxy, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
 
         if result:
             buffer_image = result[6]
-            
+
             if result[2] == 3:
                 img_shape = (result[1], result[0], result[2])
                 im_format = np.uint8
             else:
                 img_shape = (result[1], result[0])
-                im_format = np.uint16
+                im_format = np.uint8
             
             temp = np.frombuffer(buffer_image, im_format)
             np_image = np.reshape(temp, img_shape)
+            mpimg.imsave("item.png", np_image)
+
+            with open("item.png", "rb") as image_file:
+                encoded_data = base64.b64encode(image_file.read())
+                htmlElement = None
+
+                if waiting_for_user:
+                    htmlElement = '<h2>Hi I am Pepper! You may scan an item or talk to me. :)</h2> <img src="data:image/jpeg;base64,{0}"/>'.format(encoded_data)
+                else:
+                    htmlElement = '<h1>This is the picture I took, you may retake by saying "scan" again :)</h1> <img src="data:image/jpeg;base64,{0}"/>'.format(encoded_data)
+                
+                if htmlElement is not None:
+                    print(htmlElement)
+                   # magic_tablet.html(htmlElement)
+
     except Exception as e:
         print(e)
     finally:
@@ -138,7 +173,12 @@ def listen_for(topic):
     
     return result[0]
 
+def getImageEverySec():
+    if waiting_for_user:
+        threading.Timer(1.0, getImageEverySec).start()
+        get_frame(video_proxy)
 
+getImageEverySec()
 
 # Begin dialog interaction
 interact_topic = """
@@ -159,13 +199,14 @@ u: (e:Dialog/NotUnderstood) Sorry, item is not in stock. ^stayInScope
 
 say("Hello, what are you looking for today?")
 
+#magic_tablet.html(htmlElement)
 while True:
     result = listen_for(interact_topic)
-
-    print('The robot heard', result)
+    print('You said:', result)
     
     # if item found, display the details
     if result in items:
+        waiting_for_user = False
         getItemDetails(result)
     
     elif LOOKING in result and result.find('for') != -1:
@@ -175,12 +216,16 @@ while True:
         print('item ' + item)
         
         if item in items:
+            waiting_for_user = False
             getItemDetails(item)
         else:
             outOfStock(item)
-
+     
     elif result in SCAN_ITEM:
+        waiting_for_user = False
         current_frame = get_frame(video_proxy)
+
+        #print(bina/ry.decode('utf-8').replace(u"\u2022", "*"))
         say('Item scanned')
 
         detectedObject = True #detect(current_frame) -> object location
