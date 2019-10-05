@@ -18,17 +18,17 @@ import threading
 
 ''' 
     How to use robot:
-    - You can greet the robot by saying one of these words: [hi hello hey "hey pepper" "hi pepper" howdy]
+    - You can greet the robot by saying one of these words: [hi hello hey howdy]
     - Find an item by saying: ${item name} OR "looking for $[item name}" OR "scan item"
     - You may use the tablet to interact with the robot.
 '''
 
 # Connect robot
 session = qi.Session()
-robot_ip = '192.168.1.31:9559'
-virtual_robot = 'localhost:32913'
+robot_ip = '192.168.1.41:9559'
+virtual_robot = 'localhost:39821'
 
-session.connect('tcp://' + virtual_robot)
+session.connect('tcp://' + robot_ip)
 plt.show()
 
 waiting_for_user = True
@@ -41,7 +41,7 @@ atts = session.service("ALAnimatedSpeech")
 video_proxy = session.service("ALVideoDevice")
 dialog = session.service("ALDialog")
 memory = session.service("ALMemory")
-#magic_tablet = session.service("MagicTablet") #this only works with real robot
+magic_tablet = session.service("MagicTablet") #this only works with real robot
 
 
 # helper functions
@@ -50,19 +50,37 @@ def say(text):
 
 def outOfStock(item):
     say('Sorry, ' + item + ' is not in stock.')
+    answer = magic_tablet.ask([(True, "Find another item")])
+    
+    time.sleep(0.5)
+    
+    if answer:
+       beginRobotTablet()
 
 def getItemDetails(item):
     item = items[item]
     st1 = 'We have ' + item['productName'] + ' available!'
     st2 = 'You can find it in aisle ' + str(item['aisleNumber']) + '.\nIt is priced for ' + str(item['productPrice'])
-    tts.say(st1+st2)
+    sentence = st1 + st2
+    tts.say(sentence)
     
     # show on tablet
-    # displayDetailsOnTablet(st1, st2)
+    displayDetailsOnTablet(st1, st2)
+
+def beginRobotTablet():
+    magic_tablet.show(magic_tablet.animation("WAVE_HELLO"), "Hi!", "You may scan an item or talk to me :)")
+    scan = magic_tablet.ask([(True, "Scan Item"), (False, "Pick item")])
+    
+    magic_tablet.show(magic_tablet.animation("TICK"), [], [])
+    time.sleep(0.5)
+    
+    if scan:
+        scanItem()
+    else:
+        answer = magic_tablet.ask([("chocolate", "Chocolate"), ("beverage", "beverage"), ("fruit", "fruit")])
+        getItemDetails(answer)
 
 def displayDetailsOnTablet(st1, st2):
-    #html = '<h1>{0}</h1><p style="text-align: center">{1}</p>'.format(st1, st2)
-    #magic_tablet.html()
     magic_tablet.show(magic_tablet.animation("TICK"), st1, st2) 
     answer = magic_tablet.ask([(True, "Find another item"), (False, "thank you")])
     
@@ -70,9 +88,7 @@ def displayDetailsOnTablet(st1, st2):
     time.sleep(0.5)
     
     if answer:
-        magic_tablet.show(magic_tablet.animation("UNCROSS_HANDS"), "Please scan or tell me another item", [])
-        waiting_for_user = True
-        getImageEverySec()
+        beginRobotTablet()
     else:
         magic_tablet.show(magic_tablet.animation("UNCROSS_HANDS"), "Goodbye!", [])
 
@@ -96,6 +112,7 @@ def get_frame(proxy, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
     )
     
     np_image = None
+    encoded_data = None
 
     try:
         timeout = 3
@@ -120,38 +137,34 @@ def get_frame(proxy, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
 
             with open("item.png", "rb") as image_file:
                 encoded_data = base64.b64encode(image_file.read())
-                htmlElement = None
-
-                if waiting_for_user:
-                    htmlElement = '<h2>Hi I am Pepper! You may scan an item or talk to me. :)</h2> <img src="data:image/jpeg;base64,{0}"/>'.format(encoded_data)
-                else:
-                    htmlElement = '<h1>This is the picture I took, you may retake by saying "scan" again :)</h1> <img src="data:image/jpeg;base64,{0}"/>'.format(encoded_data)
-                
-                if htmlElement is not None:
-                    print(htmlElement)
-                   # magic_tablet.html(htmlElement)
 
     except Exception as e:
         print(e)
     finally:
         proxy.unsubscribe(sub)
     
-    return np_image
-    
+    return np_image, encoded_data
+
+def stop_listening():
+    subscribers = dialog.getSubscribersInfo()
+    for sub in subscribers:
+        dialog.unsubscribe(sub[0])
+
+    active_topics = dialog.getActivatedTopics()
+    for topic in active_topics:
+        dialog.deactivateTopic(topic)
+
+    loaded_topics = dialog.getAllLoadedTopics()
+    for topic in loaded_topics:
+        dialog.unloadTopic(topic)
+
 def listen_for(topic):
     result = []
-    
+    stop_listening()
+
     def callback(value):
         if value and len(value) > 0:
             result.append(value)
-    
-    # Try to unload any topic that already exists
-    topics = dialog.getAllLoadedTopics()
-    for t in topics:
-        try:
-            dialog.unloadTopic(t)
-        except: 
-            pass # do nothing if there was an error
 
     # Load the new topic
     topic_name = dialog.loadTopicContent(topic)
@@ -162,49 +175,63 @@ def listen_for(topic):
     subscriber = memory.subscriber('Dialog/LastInput')
     subscriber.signal.connect(callback)
     
-    # Keep waiting until some results have arrived
-    while len(result) == 0:
-        time.sleep(0.1)
-    
-    # Clean up by unloading the topic
-    dialog.unsubscribe('newtopic')
-    dialog.deactivateTopic(topic_name)
-    dialog.unloadTopic(topic_name)
-    
+    try:
+        # Keep waiting until some results have arrived
+        while len(result) == 0:
+            time.sleep(0.1)
+    finally:
+        # Clean up by unloading the topic
+        dialog.unsubscribe('newtopic')
+        dialog.deactivateTopic(topic_name)
+        dialog.unloadTopic(topic_name)
+        stop_listening()
+
     return result[0]
 
-def getImageEverySec():
-    if waiting_for_user:
-        threading.Timer(1.0, getImageEverySec).start()
-        get_frame(video_proxy)
+def scanItem():
+    current_frame, encoded_data = get_frame(video_proxy)
+        
+    htmlElement = '<h1 style="text-align:center;">This is the picture I took, you may retake by saying "scan" again :)</h1> <img src="data:image/png;base64,{0}"/>'.format(encoded_data)
+    magic_tablet.html(htmlElement, {})
+    say('Item scanned')
+    
+    detectedObject = True #detect(current_frame) -> object location
+    #say('Item detetcted')
 
-getImageEverySec()
+    if detectedObject: 
+        item = 'chocolate' #classify(detectedObject) -> chocolate
+        #say('Classifying item')
 
+        if item and item in items:
+            getItemDetails(item)
+        else:
+            outOfStock('item')
+    else:
+        say("I couldn't detect the object, please try again.")
+        
 # Begin dialog interaction
 interact_topic = """
 topic: ~interact()
 language: enu
 
-concept:(greeting) [hi hello hey "hey pepper" "hi pepper" howdy]
+concept:(greeting) [hi hello hey howdy "hey pepper"]
 concept:(looking) ["I am looking for _*" "looking for _*"]
-concept:(scanning) [scan take "scan picture" "take picture" "scan item" pic picture]
-concept:(items) [chocolate beverage fruit]
+concept:(scanning) [scan take "scan picture" "take picture" "scan item" picture]
+concept:(items) [chocolate beverage fruit drink]
 
-u: (_~greeting) Hello there, how may I assist you today?
-u: (_~looking) $item=$1
+u: (_~greeting) Hello there, what are you looking for today?
 u: (_~items) $item=$1
+u: (_~looking) $item=$1
 u: (_~scanning) Scanning item, please wait.
-u: (e:Dialog/NotUnderstood) Sorry, item is not in stock. ^stayInScope
+u: (e:Dialog/NotUnderstood) Sorry, I dont understand.
 """
 
-say("Hello, what are you looking for today?")
+beginRobotTablet()
 
-#magic_tablet.html(htmlElement)
 while True:
     result = listen_for(interact_topic)
     print('You said:', result)
-    
-    # if item found, display the details
+
     if result in items:
         waiting_for_user = False
         getItemDetails(result)
@@ -212,7 +239,6 @@ while True:
     elif LOOKING in result and result.find('for') != -1:
         index = result.find('for') + 4
         item = result[index:]
-
         print('item ' + item)
         
         if item in items:
@@ -222,23 +248,10 @@ while True:
             outOfStock(item)
      
     elif result in SCAN_ITEM:
-        waiting_for_user = False
-        current_frame = get_frame(video_proxy)
+        scanItem()
+    
+    elif result in ['bye', 'goodbye']:
+        stop_listening()
+        say('See ya!')
 
-        #print(bina/ry.decode('utf-8').replace(u"\u2022", "*"))
-        say('Item scanned')
-
-        detectedObject = True #detect(current_frame) -> object location
-        say('Item detetcted')
-
-        if detectedObject: 
-            item = 'chocolate' #classify(detectedObject) -> chocolate
-            say('Classifying item')
-
-            if item and item in items:
-                getItemDetails(item)
-            else:
-                outOfStock('item')
-        else:
-            say("I couldn't detect the object, please try again.")
                 
