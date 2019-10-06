@@ -49,7 +49,7 @@ class Robot:
         It consistently listen for user input
     '''
     def run(self):
-        #self.startTablet()
+        self.startTablet()
 
         while True:
             self.createContentTopic()
@@ -122,7 +122,7 @@ class Robot:
         print(encoded_data)
 
         imageSrc = IMAGE_SCANNED_HTML.format(encoded_data)
-        #self.tablet.htmlDisplay(imageSrc)
+        self.tablet.htmlDisplay(imageSrc)
         self.say(ITEM_SCANNED)
         
         item = self.model.getItemFromImage()
@@ -157,13 +157,13 @@ class Robot:
 
         self.say(message)
 
-        #self.tablet.display(ANIMATION['TICK'], line1, line2)
-        #self.findAnotherItem()
+        self.tablet.display(ANIMATION['TICK'], line1, line2)
+        self.findAnotherItem()
 
 
     def outOfStock(self, item):
         self.say(NOT_IN_STOCK.format(item))
-        #self.findAnotherItem()
+        self.findAnotherItem()
 
     '''
         - Displays 2 buttons, Find another item and thank you.
@@ -273,8 +273,8 @@ class Robot:
                 
                 temp = np.frombuffer(buffer_image, im_format)
                 np_image = np.reshape(temp, img_shape)
-                #mpimg.imsave("dasdasd.jpg", np_image)
-                #cv2.imwrite(self.imagePath, np_image)
+                #mpimg.imsave(self.imagePath, np_image)
+                cv2.imwrite(self.imagePath, np_image)
                 
                 with open(self.imagePath, "rb") as image_file:
                     encoded_data = base64.b64encode(image_file.read())
