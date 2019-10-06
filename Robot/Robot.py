@@ -7,21 +7,23 @@ from naoqi import ALProxy
 from Constants import *
 from Tablet import Tablet
 from Store import Store
-from Model.Yolo_Inference import *
 
 # Helpers
-import time
+import time, cv2, base64, random, os, subprocess, sys
 import numpy as np
-import cv2
-import base64
-import random
+import matplotlib.image as mpimg
 
 class Robot:
 
-    def __init__(self):
+    def __init__(self, Model):
+
+        self.path = os.getcwd()
+        self.imagePath = self.path + IMAGE_PATH
 
         self.store = Store()
-        self.topic_content = INTERACTION_CONTENT.format(self.store.conceptStringFormat())
+        self.items = self.store.availableItems
+
+        self.model = Model(self.items)
 
         # Connect Robot
         self.session = qi.Session()
@@ -44,13 +46,15 @@ class Robot:
             self.tablet = Tablet(self.session)
 
     '''
-        This will begin the interaction with the Robot 
+        - This will start the interaction with the Robot 
+        - It consistently listen for user input
     '''
     def run(self):
         #self.startTablet()
-        
         while True:
+            self.createContentTopic()
             result = self.listen_for(self.topic_content)
+
             print('You said: {0}'.format(result))
 
             foundItem = self.store.getItem(result)
@@ -70,9 +74,27 @@ class Robot:
             
             elif result in BYE:
                 self.stop_listening()
-                self.say(random.choice(BYE))
 
-                        
+
+    # Generate random values for the robot to listen and say
+    def createContentTopic(self):
+        self.topic_content = INTERACTION_CONTENT.format(
+            self.conceptStringFormat(USER_GREET),
+            random.choice(ROBOT_GREET),
+            self.conceptStringFormat(LOOK),
+            self.conceptStringFormat(self.items),
+            self.conceptStringFormat(SCAN),
+            self.conceptStringFormat(BYE),
+            random.choice(BYE),
+            random.choice(ROBOT_CONFUSED)
+        )
+
+    '''
+        - Display two buttons to the user
+            - Scan item and choose item
+                - if scan item was pressed, it will call the scanItem function to detect and classify the item
+                - if choose item was pressed, it will display available items and when pressed it will show the item details
+    '''
     def startTablet(self):
         self.tablet.show(ANIMATION['WAVE'], HI, SCAN_ITEM_OR_TALK)
         answer = self.tablet.ask(SCAN_ITEM, CHOOSE_ITEM)
@@ -90,23 +112,30 @@ class Robot:
         self.tts.say(message)
 
     '''
-
+        - Get the current frame from the robot camera
+        - Encodes the frame into base64 to display on the tablet
+        - Call method in model to classify image
+        - If the classifed value is available, display details
     '''
     def scanItem(self):
-        current_frame, encoded_data = self.get_frame(self)
+        current_frame, encoded_data = self.get_frame()
+        print(encoded_data)
 
-        self.tablet.html(IMAGE_SCANNED_HTML.format(encoded_data))
+        imageSrc = IMAGE_SCANNED_HTML.format(encoded_data)
+        #self.tablet.htmlDisplay(imageSrc)
         self.say(ITEM_SCANNED)
         
-        objectDetected, results = detectImage(current_frame)
+        item = self.model.getItemFromImage()
 
-        if objectDetected: 
-            classifiedImage = classifyImage(results)
-            self.findAndDisplayItem(classifiedImage)
+        if item is not None: 
+            print('Item classified is: {0}'.format(item))
+            self.findAndDisplayItem(item)
         else:
             self.say(OBJECT_NOT_DETECTED)
 
-
+    '''
+        - Check the store if the item is available and display it
+    '''
     def findAndDisplayItem(self, item):
         itemInStock = self.store.getItem(item)
         if itemInStock:
@@ -131,13 +160,14 @@ class Robot:
         #self.tablet.display(ANIMATION['TICK'], line1, line2)
         #self.findAnotherItem()
 
+
     def outOfStock(self, item):
         self.say(NOT_IN_STOCK.format(item))
         #self.findAnotherItem()
 
     '''
-        Displays 2 buttons, Find another item and thank you.
-            If find another item was pressed, it will start again
+        - Displays 2 buttons, Find another item and thank you.
+            - If find another item was pressed, it will start again
     '''
     def findAnotherItem(self):
         answer = self.tablet.ask(FIND_ANOTHER_ITEM, THANK_YOU)
@@ -151,6 +181,12 @@ class Robot:
             self.tablet.show(ANIMATION['UNCROSS_HANDS'], random.choice(BYE))
             self.stop_listening()
             self.say(random.choice(BYE))
+
+    def conceptStringFormat(self, data):
+        string = ''
+        for item in data:
+            string += '"{0}" '.format(item)
+        return string
 
     def listen_for(self, topic):
         result = []
@@ -182,6 +218,7 @@ class Robot:
 
         return result[0]
 
+
     def stop_listening(self):
         subscribers = self.dialog.getSubscribersInfo()
         for sub in subscribers:
@@ -194,6 +231,7 @@ class Robot:
         loaded_topics = self.dialog.getAllLoadedTopics()
         for topic in loaded_topics:
             self.dialog.unloadTopic(topic)
+
 
     def get_frame(self, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
         if not self.video_proxy.isCameraOpen(camera_idx):
@@ -235,9 +273,10 @@ class Robot:
                 
                 temp = np.frombuffer(buffer_image, im_format)
                 np_image = np.reshape(temp, img_shape)
-                mpimg.imsave("item.jpg", np_image)
-
-                with open("item.jpg", "rb") as image_file:
+                #mpimg.imsave("dasdasd.jpg", np_image)
+                #cv2.imwrite(self.imagePath, np_image)
+                
+                with open(self.imagePath, "rb") as image_file:
                     encoded_data = base64.b64encode(image_file.read())
 
         except Exception as e:

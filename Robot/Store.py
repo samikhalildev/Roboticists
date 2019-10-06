@@ -28,15 +28,9 @@ class Store:
             }
         ]
 
-        self.availableItems = ['chocolate', 'beverages', 'fruit', 'beverages', 'pods', 'mars', 'mars pods' 'apple', 'pepsi', 'cola', 'soft drink', 'drink']
+        self.availableItems = ['chocolate', 'beverages', 'fruit', 'beverages', 'pods', 'mars', 'mars pods', 'apple', 'pepsi', 'cola', 'soft drink', 'drink']
 
     def getItem(self, query):
         for item in self.products:
             if query in item['similarItems']:
                 return item
-
-    def conceptStringFormat(self):
-        string = ''
-        for item in self.availableItems:
-            string += '"{0}" '.format(item)
-        return string
