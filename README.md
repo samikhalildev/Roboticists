@@ -8,11 +8,11 @@
     
 ## Interaction:
     Speech:
-        - Greet the robot by saying one of these words: [hi hello hey howdy hey pepper]
+        - Greet the robot by saying one of these words: [hi hello hey howdy yo sup help "hey pepper"]
         - To find an item, say: [looking for {item}] or just {item}
         - To see if an item exists, you may can show the robot a picture or a physical object and say "scan item"
-        - To end interaction, say []
-        
+        - To end interaction, say [bye goodbye laters "see ya"]
+
     Touch:
         - Use the tablet to find a product
         - You may use the tablet to scan an object

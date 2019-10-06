@@ -15,7 +15,7 @@ class Model:
         
         self.image_path = self.path + '/img/item.jpg'
         self.yolo_tiny_path = self.path + '/DarkflowTry/cfg/yolov2-tiny.cfg'
-        self.yolo_weights_path = self.path + '/DarkflowTry/yolov2-tiny.weights'
+        self.yolo_weights_path = self.path + '/yolov2-tiny.weights'
         self.availableItems = items
 
         os.chdir(self.path + '/DarkflowTry')
@@ -59,6 +59,7 @@ class Model:
         for data in self.result:
             label = str(data['label']).lower()
             value = data['confidence']
+            print(label)
 
             if label in self.availableItems:
                 itemsFound.append((label, value))
@@ -68,10 +69,14 @@ class Model:
     def getHighestValue(self, itemsFound):
         label = None
         value = 0
-        print('Items detected that are available in store: {0}'.format(itemsFound))
+        print('\nItems detected that are available in store: {0}'.format(itemsFound))
 
         for item in itemsFound:
             if item[1] > value:
                 label, value = item[0], item[1]
 
+        print('Value: {0}'.format(label))
         return label
+
+#items = ['chocolate', 'beverages', 'fruit', 'banana', 'juice', 'orange', 'strawberry', 'blueberry', 'watermelon', 'peach', 'pear', 'beverages', 'pods', 'mars', 'mars pods', 'apple', 'pepsi', 'cola', 'soft drink', 'drink']
+#Model(items).getItemFromImage()
