@@ -75,8 +75,9 @@ class Model:
             if item[1] > value:
                 label, value = item[0], item[1]
 
-        print('Value: {0}'.format(label))
         return label
 
-#items = ['chocolate', 'beverages', 'fruit', 'banana', 'juice', 'orange', 'strawberry', 'blueberry', 'watermelon', 'peach', 'pear', 'beverages', 'pods', 'mars', 'mars pods', 'apple', 'pepsi', 'cola', 'soft drink', 'drink']
-#Model(items).getItemFromImage()
+if __name__ == "__main__":
+    items = ['chocolate', 'beverages', 'fruit', 'banana', 'juice', 'orange', 'strawberry', 'blueberry', 'watermelon', 'peach', 'pear', 'beverages', 'pods', 'mars', 'mars pods', 'apple', 'pepsi', 'cola', 'soft drink', 'drink']
+    value = Model(items).getItemFromImage()
+    print('Value: {0}'.format(label))

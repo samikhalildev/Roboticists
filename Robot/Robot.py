@@ -6,7 +6,6 @@ from naoqi import ALProxy
 # Custom scripts
 from Constants import *
 from Tablet import Tablet
-from Store import Store
 
 # Helpers
 import time, cv2, base64, random, os, subprocess, sys
@@ -15,7 +14,7 @@ import matplotlib.image as mpimg
 
 class Robot:
 
-    def __init__(self, Model):
+    def __init__(self, Model, Store):
 
         self.path = os.getcwd()
         self.imagePath = self.path + IMAGE_PATH
@@ -46,11 +45,12 @@ class Robot:
             self.tablet = Tablet(self.session)
 
     '''
-        - This will start the interaction with the Robot 
-        - It consistently listen for user input
+        This will start the interaction with the Robot 
+        It consistently listen for user input
     '''
     def run(self):
         #self.startTablet()
+
         while True:
             self.createContentTopic()
             result = self.listen_for(self.topic_content)
@@ -90,7 +90,7 @@ class Robot:
         )
 
     '''
-        - Display two buttons to the user
+        Display two buttons to the user
             - Scan item and choose item
                 - if scan item was pressed, it will call the scanItem function to detect and classify the item
                 - if choose item was pressed, it will display available items and when pressed it will show the item details
@@ -105,7 +105,7 @@ class Robot:
         if answer == SCAN_ITEM:
             self.scanItem()
         else:
-            response = self.tablet.ask(self.store.availableItems[:3])
+            response = self.tablet.ask(self.items[:3])
             self.findAndDisplayItem(response)
 
     def say(self, message):

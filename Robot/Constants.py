@@ -1,19 +1,19 @@
 VIRTUAL_ROBOT = True
 REAL_ROBOT_IP = '192.168.1.41:9559'
-VIRTUAL_ROBOT_IP = 'localhost:35411'
+VIRTUAL_ROBOT_IP = 'localhost:35633'
+
 IMAGE_PATH = '/Model/img/item.jpg'
 
 # Interaction
 USER_GREET = ['hi', 'hello', 'hey', 'howdy', 'hey pepper', 'help', 'sup', 'how are you', 'how you doing', "what's up", "yo", "pepper"]
+ROBOT_GREET = ['Hello there, what are you looking for today?', 'Hey human, how may I help you today?', 'Howdy, what would you like?', 'Hello there, I am here to help.', 'Hey friend, how may I assist you?', 'Hi, I am Pepper, your shopping buddy.']
 SCAN = ['take picture', 'scan item', 'scan picture', 'scan', 'picture', 'take pic']
 LOOK = ["I am looking for _*", "looking for _*"]
 BYE = ['bye', 'goodbye', 'see ya', 'see ya later', 'laters', 'have a good day', 'goodnight', 'enjoy your day']
 LOOK_FOR = 'looking for'
-
-ROBOT_GREET = ['Hello there, what are you looking for today?', 'Hey human, how may I help you today?', 'Howdy, what would you like?', 'Hello there, I am here to help.', 'Hey friend, how may I assist you?', 'Hi, I am Pepper, your shopping buddy.']
 ROBOT_CONFUSED = ['Sorry, I dont understand.', 'I am not sure what you said', 'What?', 'Please repeat that', 'Sorry, I didnt get that', 'What did you just say?', 'I am unable to process that', 'I dont get it', "I am confused"]
 
-# Robot messages
+# Robot states
 HI = 'Hi!'
 SCAN_ITEM = 'Scan Item'
 CHOOSE_ITEM = 'Choose Item'

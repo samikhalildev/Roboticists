@@ -5,7 +5,7 @@ class Tablet:
         self.magic_tablet = session.service("MagicTablet")
     
     def show(self, animation=[], line1=[], line2=[]):
-        self.magic_tablet.show(self.animation(animation), line1, line2)
+        self.magic_tablet.show(self.animation(animation) if len(animation) else animation, line1, line2)
 
     def animation(self, key):
         self.magic_tablet.animation(key)
@@ -13,6 +13,7 @@ class Tablet:
     def ask(self, *line):
         btns = []
 
+        # create a tuple array of the same value
         for i, text in enumerate(line):
             btns.append((text, text))
 
