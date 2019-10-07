@@ -20,4 +20,4 @@
     Recognise:
         - Robot has the capability to detect and recognise humans using feature extraction
         - If the robot doesn't know you, it will ask for your name and extract the features from the frame which will then be stored in a file to recognise you next time.
-        - To begin this, say: do you know me, who am i or what is my name"
+        - To begin this, say: do you know me, who am i or what is my name
