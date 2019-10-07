@@ -1,4 +1,3 @@
-
 # Pepper dependiences
 import qi
 from naoqi import ALProxy
@@ -6,6 +5,7 @@ from naoqi import ALProxy
 # Custom scripts
 from Constants import *
 from Tablet import Tablet
+from Awareness import Awareness
 
 # Helpers
 import time, cv2, base64, random, os, subprocess, sys
@@ -14,15 +14,14 @@ import matplotlib.image as mpimg
 
 class Robot:
 
-    def __init__(self, Model, Store):
-
-        self.path = os.getcwd()
-        self.imagePath = self.path + IMAGE_PATH
+    def __init__(self, Store, Model):
 
         self.store = Store()
         self.items = self.store.availableItems
-
         self.model = Model(self.items)
+
+        self.path = os.getcwd()
+        self.imagePath = self.path + IMAGE_PATH
 
         # Connect Robot
         self.session = qi.Session()
@@ -40,7 +39,13 @@ class Robot:
         self.video_proxy = self.session.service("ALVideoDevice")
         self.dialog = self.session.service("ALDialog")
         self.memory = self.session.service("ALMemory")
-        
+
+        self.awareness = Awareness(self.session, self.imagePath, self.store)
+
+        self.person = None
+        self.personRecognised = False
+        self.personRegistered = False
+
         if not VIRTUAL_ROBOT:
             self.tablet = Tablet(self.session)
 
@@ -50,12 +55,16 @@ class Robot:
     '''
     def run(self):
         self.startTablet()
+        #self.recognisePerson()
 
         while True:
-            self.createContentTopic()
-            result = self.listen_for(self.topic_content)
+            self.createMainContentTopic()
 
+            result = self.listen_for(self.topic_content)
             print('You said: {0}'.format(result))
+
+            #if not self.personRegistered or not self.personRecognised:
+                #self.recognisePerson()
 
             foundItem = self.store.getItem(result)
 
@@ -76,8 +85,55 @@ class Robot:
                 self.stop_listening()
 
 
+    def recognisePerson(self):
+        path = self.imagePath.format('person')
+        self.get_frame(path)
+        
+        status = self.awareness.recognisePerson()
+
+        if REGISTERED_PERSON in status:
+            status, name = status
+
+            self.say(REGISTERED_PERSON.format(name))
+            answer = self.tablet.ask(YES, NO)
+
+            self.tablet.show(ANIMATION['PROGRESS'])
+            time.sleep(0.5)
+            
+            if answer == YES:
+                self.personRecognised = True
+                self.personRegistered = True
+                self.person = name
+                self.say(THANK_YOU)
+                
+            elif answer == NO:
+                self.recogniseByUserName(TELL_NAME)
+
+        elif status == UNABLE_TO_RECOGNISE_PERSON:
+            self.recogniseByUserName(status)
+
+
+    def recogniseByUserName(self, text):
+        while not self.personRegistered:
+            self.say(text)
+            result = self.listen_for(RECOGNISE_CONTENT)
+            self.say(CONFIRM_NAME.format(result))
+
+            answer = self.tablet.ask(YES, NO)
+
+            if answer == YES:
+                status = self.awareness.recogniseNewPerson(result)
+
+                if status == NEW_PERSON:
+                    self.say(NEW_PERSON.format(result))
+                    self.personRegistered = True
+
+                elif status == NOT_RECOGNISED or status == DETECTED_MULTIPLE_HUMANS:
+                    self.say(status)
+                    
+
     # Generate random values for the robot to listen and say
-    def createContentTopic(self):
+    def createMainContentTopic(self):
         self.topic_content = INTERACTION_CONTENT.format(
             self.conceptStringFormat(USER_GREET),
             random.choice(ROBOT_GREET),
@@ -118,7 +174,7 @@ class Robot:
         - If the classifed value is available, display details
     '''
     def scanItem(self):
-        current_frame, encoded_data = self.get_frame()
+        current_frame, encoded_data = self.get_frame(self.imagePath.format('item'))
         print(encoded_data)
 
         imageSrc = IMAGE_SCANNED_HTML.format(encoded_data)
@@ -233,7 +289,7 @@ class Robot:
             self.dialog.unloadTopic(topic)
 
 
-    def get_frame(self, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
+    def get_frame(self, imagePath, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
         if not self.video_proxy.isCameraOpen(camera_idx):
             self.video_proxy.openCamera(camera_idx)
 
@@ -269,14 +325,14 @@ class Robot:
                     im_format = np.uint8
                 else:
                     img_shape = (result[1], result[0])
-                    im_format = np.uint8
+                    im_format = np.uint16
                 
                 temp = np.frombuffer(buffer_image, im_format)
                 np_image = np.reshape(temp, img_shape)
-                #mpimg.imsave(self.imagePath, np_image)
-                cv2.imwrite(self.imagePath, np_image)
+                #mpimg.imsave(imagePath, np_image)
+                cv2.imwrite(imagePath, np_image)
                 
-                with open(self.imagePath, "rb") as image_file:
+                with open(imagePath, "rb") as image_file:
                     encoded_data = base64.b64encode(image_file.read())
 
         except Exception as e:

@@ -1,8 +1,8 @@
-VIRTUAL_ROBOT = False
+VIRTUAL_ROBOT = True
 REAL_ROBOT_IP = '192.168.1.41:9559'
-VIRTUAL_ROBOT_IP = 'localhost:35633'
+VIRTUAL_ROBOT_IP = 'localhost:38343'
 
-IMAGE_PATH = '/Model/img/item.jpg'
+IMAGE_PATH = '/Model/img/{0}.jpg'
 
 # Interaction
 USER_GREET = ['hi', 'hello', 'hey', 'howdy', 'hey pepper', 'help', 'sup', 'how are you', 'how you doing', "what's up", "yo", "pepper"]
@@ -12,6 +12,10 @@ LOOK = ["I am looking for _*", "looking for _*"]
 BYE = ['bye', 'goodbye', 'see ya', 'see ya later', 'laters', 'have a good day', 'goodnight', 'enjoy your day']
 LOOK_FOR = 'looking for'
 ROBOT_CONFUSED = ['Sorry, I dont understand.', 'I am not sure what you said', 'What?', 'Please repeat that', 'Sorry, I didnt get that', 'What did you just say?', 'I am unable to process that', 'I dont get it', "I am confused"]
+YES = 'YES'
+NO = 'NO'
+RECOGNISE_ME = 'I am _*'
+TELL_NAME = 'What is your name?'
 
 # Robot states
 HI = 'Hi!'
@@ -26,6 +30,17 @@ NOT_IN_STOCK = 'Sorry, {0} may be not in stock.'
 OBJECT_NOT_DETECTED = "Object not detected, please try again."
 THANK_YOU = 'Thank you'
 FOR = 'for'
+
+# Awareness
+PERSON_DETECTED = 'Person has been detected, recognising now'
+UNABLE_TO_DETECT = 'Unable to detect person'
+NEW_PERSON = 'Hi {0}, I can recognise you now!'
+REGISTERED_PERSON = "You're {0}. Is this true?"
+NOT_RECOGNISED = 'Something went wrong.'
+DETECTED_MULTIPLE_HUMANS = 'Detected multiple people, only one must be in frame'
+UNABLE_TO_RECOGNISE_PERSON = 'I am unable to recognise you, please tell me your name'
+NOT_SURE = 'I am not sure what just happened'
+CONFIRM_NAME = 'Please confirm your name is {0}'
 
 # Tablet animation
 ANIMATION = {
@@ -57,6 +72,14 @@ INTERACTION_CONTENT = """
     u: (_~scan) Scanning item, please wait.
     u: (_~bye) {6}
     u: (e:Dialog/NotUnderstood) {7}
+"""
+
+RECOGNISE_CONTENT = """
+    topic: ~recognise()
+    language: enu
+
+    concept:(recognise) ["I am _*"]
+    u: (~recognise) $name=$1
 """
 
 # Encoded image HTML src
