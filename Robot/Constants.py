@@ -8,13 +8,13 @@ IMAGE_PATH = '/Model/img/{0}.jpg'
 USER_GREET = ['hi', 'hello', 'hey', 'howdy', 'hey pepper', 'help', 'sup', 'how are you', 'how you doing', "what's up", "yo", "pepper"]
 ROBOT_GREET = ['Hello there, what are you looking for today?', 'Hey human, how may I help you today?', 'Howdy, what would you like?', 'Hello there, I am here to help.', 'Hey friend, how may I assist you?', 'Hi, I am Pepper, your shopping buddy.']
 SCAN = ['take picture', 'scan item', 'scan picture', 'scan', 'picture', 'take pic']
+DETECT = ['detect', 'what is my name', 'who am i', 'do you know me', 'do you know who i am']
 LOOK = ["I am looking for _*", "looking for _*"]
 BYE = ['bye', 'goodbye', 'see ya', 'see ya later', 'laters', 'have a good day', 'goodnight', 'enjoy your day']
 LOOK_FOR = 'looking for'
 ROBOT_CONFUSED = ['Sorry, I dont understand.', 'I am not sure what you said', 'What?', 'Please repeat that', 'Sorry, I didnt get that', 'What did you just say?', 'I am unable to process that', 'I dont get it', "I am confused"]
 YES = 'YES'
 NO = 'NO'
-RECOGNISE_ME = 'I am _*'
 TELL_NAME = 'What is your name?'
 
 # Robot states
@@ -64,14 +64,16 @@ INTERACTION_CONTENT = """
     concept:(look)  [{2}]
     concept:(items) [{3}]
     concept:(scan)  [{4}]
-    concept:(bye)   [{5}]
+    concept:(detect)[{5}]
+    concept:(bye)   [{6}]
 
     u: (_~greet) {1}
     u: (_~look) $item=$1
     u: (_~items) $item=$1
     u: (_~scan) Scanning item, please wait.
-    u: (_~bye) {6}
-    u: (e:Dialog/NotUnderstood) {7}
+    u: (~detect) Detecting
+    u: (_~bye) {7}
+    u: (e:Dialog/NotUnderstood) {8}
 """
 
 RECOGNISE_CONTENT = """

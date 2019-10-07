@@ -43,7 +43,6 @@ class Robot:
         self.awareness = Awareness(self.session, self.imagePath, self.store)
 
         self.person = None
-        self.personRecognised = False
         self.personRegistered = False
 
         if not VIRTUAL_ROBOT:
@@ -55,16 +54,12 @@ class Robot:
     '''
     def run(self):
         self.startTablet()
-        #self.recognisePerson()
 
         while True:
             self.createMainContentTopic()
 
             result = self.listen_for(self.topic_content)
             print('You said: {0}'.format(result))
-
-            #if not self.personRegistered or not self.personRecognised:
-                #self.recognisePerson()
 
             foundItem = self.store.getItem(result)
 
@@ -80,6 +75,9 @@ class Robot:
             
             elif result in SCAN:
                 self.scanItem()
+
+            elif result in DETECT:
+                self.recognisePerson()
             
             elif result in BYE:
                 self.stop_listening()
@@ -101,8 +99,6 @@ class Robot:
             time.sleep(0.5)
             
             if answer == YES:
-                self.personRecognised = True
-                self.personRegistered = True
                 self.person = name
                 self.say(THANK_YOU)
                 
@@ -130,6 +126,8 @@ class Robot:
 
                 elif status == NOT_RECOGNISED or status == DETECTED_MULTIPLE_HUMANS:
                     self.say(status)
+
+        self.personRegistered = False
                     
 
     # Generate random values for the robot to listen and say
@@ -140,6 +138,7 @@ class Robot:
             self.conceptStringFormat(LOOK),
             self.conceptStringFormat(self.items),
             self.conceptStringFormat(SCAN),
+            self.conceptStringFormat(DETECT),
             self.conceptStringFormat(BYE),
             random.choice(BYE),
             random.choice(ROBOT_CONFUSED)
