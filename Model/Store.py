@@ -7,31 +7,77 @@ class Store:
         self.knownUsers = self.loadJSON()
         self.products = [
             {
-                "productName":"Mars Pods",
-                "similarItems": ['chocolate', 'mars', 'pods', 'mars pods'],
-                "productPrice":4.99,
-                "aisleNumber":5,
-                "productStock":75
-            },
-
-            {
-                "productName":"Pepsi",
-                "similarItems": ['beverage', 'beverages', 'drink', 'pepsi', 'cola', 'soft drink'],
-                "productPrice":3.99,
-                "aisleNumber":3,
-                "productStock":150
-            },
-
-            {
-                "productName":"Apple",
-                "similarItems": ['fruit', 'apple'],
+                "productName":"apple",
                 "productPrice":0.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+            
+            {
+                "productName":"banana",
+                "productPrice":2.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"orange",
+                "productPrice":1.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"broccoli",
+                "productPrice":2.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"carrot",
+                "productPrice":1.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"pizza",
+                "productPrice":2.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"laptop",
+                "productPrice":2.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"keyboard",
+                "productPrice":2.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"donut",
+                "productPrice":2.99,
+                "aisleNumber":1,
+                "productStock":200
+            },
+
+            {
+                "productName":"hot dog",
+                "productPrice":2.99,
                 "aisleNumber":1,
                 "productStock":200
             }
         ]
 
-        self.availableItems = ['chocolate', 'beverages', 'fruit', 'beverages', 'pods', 'mars', 'mars pods', 'apple', 'pepsi', 'cola', 'soft drink', 'drink']
+        self.availableItems = ['pizza', 'apple', 'hot dog', 'donut', 'keyboard', 'laptop', 'carrot', 'apple', 'orange', 'broccoli', 'banana']
 
     def loadJSON(self):
         with open(self.users_path, 'r') as f:
@@ -52,9 +98,10 @@ class Store:
                     return False
 
     def getItem(self, query):
-        for item in self.products:
-            if query in item['similarItems']:
-                return item
+        if query in self.availableItems:
+            for item in self.products:
+                if query == item['productName']:
+                    return item
 
 
 if __name__ == "__main__":

@@ -14,13 +14,12 @@ import matplotlib.image as mpimg
 
 class Robot:
 
-    def __init__(self, Store, Model):
+    def __init__(self, path, Store, Model):
 
         self.store = Store()
         self.items = self.store.availableItems
         self.model = Model(self.items)
-
-        self.path = os.getcwd()
+        self.path = path
         self.imagePath = self.path + IMAGE_PATH
 
         # Connect Robot
@@ -93,10 +92,13 @@ class Robot:
             status, name = status
 
             self.say(REGISTERED_PERSON.format(name))
-            answer = self.tablet.ask(YES, NO)
 
-            self.tablet.show(ANIMATION['PROGRESS'])
-            time.sleep(0.5)
+            if not VIRTUAL_ROBOT:
+                answer = self.tablet.ask(YES, NO)
+                self.tablet.show(ANIMATION['PROGRESS'])
+                time.sleep(0.5)
+            else:
+                answer = YES
             
             if answer == YES:
                 self.person = name
@@ -115,8 +117,13 @@ class Robot:
             result = self.listen_for(RECOGNISE_CONTENT)
             self.say(CONFIRM_NAME.format(result))
 
-            answer = self.tablet.ask(YES, NO)
-
+            if not VIRTUAL_ROBOT:
+                answer = self.tablet.ask(YES, NO)
+                self.tablet.show(ANIMATION['PROGRESS'])
+                time.sleep(0.5)
+            else:
+                answer = YES
+                
             if answer == YES:
                 status = self.awareness.recogniseNewPerson(result)
 
@@ -151,17 +158,18 @@ class Robot:
                 - if choose item was pressed, it will display available items and when pressed it will show the item details
     '''
     def startTablet(self):
-        self.tablet.show(ANIMATION['WAVE'], HI, SCAN_ITEM_OR_TALK)
-        answer = self.tablet.ask(SCAN_ITEM, CHOOSE_ITEM)
-        
-        self.tablet.show(ANIMATION['TICK'])
-        time.sleep(0.5)
-        
-        if answer == SCAN_ITEM:
-            self.scanItem()
-        else:
-            response = self.tablet.ask(self.items[:3])
-            self.findAndDisplayItem(response)
+        if not VIRTUAL_ROBOT:
+            self.tablet.show(ANIMATION['WAVE'], HI, SCAN_ITEM_OR_TALK)
+            answer = self.tablet.ask(SCAN_ITEM, CHOOSE_ITEM)
+            
+            self.tablet.show(ANIMATION['TICK'])
+            time.sleep(0.5)
+            
+            if answer == SCAN_ITEM:
+                self.scanItem()
+            else:
+                response = self.tablet.ask(self.items[:3])
+                self.findAndDisplayItem(response)
 
     def say(self, message):
         self.tts.say(message)
@@ -173,11 +181,14 @@ class Robot:
         - If the classifed value is available, display details
     '''
     def scanItem(self):
-        current_frame, encoded_data = self.get_frame(self.imagePath.format('item'))
-        print(encoded_data)
+        current_frame, encoded_image = self.get_frame(self.imagePath.format('item'))
+        print('Encoded image: {0}'.format(encoded_image))
 
-        imageSrc = IMAGE_SCANNED_HTML.format(encoded_data)
-        self.tablet.htmlDisplay(imageSrc)
+        imageSrc = IMAGE_SCANNED_HTML.format(encoded_image)
+    
+        if not VIRTUAL_ROBOT:
+            self.tablet.htmlDisplay(imageSrc)
+
         self.say(ITEM_SCANNED)
         
         item = self.model.getItemFromImage()
@@ -212,8 +223,9 @@ class Robot:
 
         self.say(message)
 
-        self.tablet.display(ANIMATION['TICK'], line1, line2)
-        self.findAnotherItem()
+        if not VIRTUAL_ROBOT:
+            self.tablet.display(ANIMATION['TICK'], line1, line2)
+            self.findAnotherItem()
 
 
     def outOfStock(self, item):
@@ -225,17 +237,18 @@ class Robot:
             - If find another item was pressed, it will start again
     '''
     def findAnotherItem(self):
-        answer = self.tablet.ask(FIND_ANOTHER_ITEM, THANK_YOU)
+        if not VIRTUAL_ROBOT:
+            answer = self.tablet.ask(FIND_ANOTHER_ITEM, THANK_YOU)
 
-        self.tablet.show(ANIMATION['TICK'])
-        time.sleep(0.5)
+            self.tablet.show(ANIMATION['TICK'])
+            time.sleep(0.5)
 
-        if answer is FIND_ANOTHER_ITEM:
-            self.startTablet()
-        else:
-            self.tablet.show(ANIMATION['UNCROSS_HANDS'], random.choice(BYE))
-            self.stop_listening()
-            self.say(random.choice(BYE))
+            if answer is FIND_ANOTHER_ITEM:
+                self.startTablet()
+            else:
+                self.tablet.show(ANIMATION['UNCROSS_HANDS'], random.choice(BYE))
+                self.stop_listening()
+                self.say(random.choice(BYE))
 
     def conceptStringFormat(self, data):
         string = ''
@@ -307,7 +320,7 @@ class Robot:
         )
         
         np_image = None
-        encoded_data = None
+        encoded_image = None
 
         try:
             timeout = 3
@@ -329,10 +342,11 @@ class Robot:
                 temp = np.frombuffer(buffer_image, im_format)
                 np_image = np.reshape(temp, img_shape)
                 #mpimg.imsave(imagePath, np_image)
+                print('image scanned: {0}'.format(imagePath))
                 cv2.imwrite(imagePath, np_image)
                 
                 with open(imagePath, "rb") as image_file:
-                    encoded_data = base64.b64encode(image_file.read())
+                    encoded_image = base64.b64encode(image_file.read())
 
         except Exception as e:
             print(e)
@@ -340,4 +354,4 @@ class Robot:
         finally:
             self.video_proxy.unsubscribe(sub)
         
-        return np_image, encoded_data
+        return np_image, encoded_image

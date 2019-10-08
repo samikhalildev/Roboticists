@@ -1,6 +1,6 @@
 VIRTUAL_ROBOT = True
 REAL_ROBOT_IP = '192.168.1.41:9559'
-VIRTUAL_ROBOT_IP = 'localhost:38343'
+VIRTUAL_ROBOT_IP = 'localhost:45023'
 
 IMAGE_PATH = '/Model/img/{0}.jpg'
 
@@ -71,7 +71,7 @@ INTERACTION_CONTENT = """
     u: (_~look) $item=$1
     u: (_~items) $item=$1
     u: (_~scan) Scanning item, please wait.
-    u: (~detect) Detecting
+    u: (_~detect) Detecting
     u: (_~bye) {7}
     u: (e:Dialog/NotUnderstood) {8}
 """
