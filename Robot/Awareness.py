@@ -10,7 +10,7 @@ class Awareness:
 
     def __init__(self, session, imagePath, store):
         self.motion = session.service("ALMotion")
-        self.imagePath = imagePath.format('musk')
+        self.imagePath = imagePath.format('person')
         self.similarity_threshold = 0.5
         self.store = store
         self.img = None

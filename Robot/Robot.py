@@ -38,6 +38,7 @@ class Robot:
         self.video_proxy = self.session.service("ALVideoDevice")
         self.dialog = self.session.service("ALDialog")
         self.memory = self.session.service("ALMemory")
+        self.magic_tablet = self.session.service("MagicTablet")
 
         self.awareness = Awareness(self.session, self.imagePath, self.store)
 
@@ -52,10 +53,10 @@ class Robot:
         It consistently listen for user input
     '''
     def run(self):
-        self.startTablet()
-
+        
         while True:
             self.createMainContentTopic()
+            print('running')
 
             result = self.listen_for(self.topic_content)
             print('You said: {0}'.format(result))
@@ -79,6 +80,8 @@ class Robot:
                 self.recognisePerson()
             
             elif result in BYE:
+                #if not VIRTUAL_ROBOT:
+                    #self.tablet.show(ANIMATION['UNCROSS_HANDS'], random.choice(BYE))
                 self.stop_listening()
 
 
@@ -94,15 +97,15 @@ class Robot:
             self.say(REGISTERED_PERSON.format(name))
 
             if not VIRTUAL_ROBOT:
-                answer = self.tablet.ask(YES, NO)
-                self.tablet.show(ANIMATION['PROGRESS'])
+                answer = self.magic_tablet.ask([(True, YES), (False, NO)])
+                self.magic_tablet.show(self.magic_tablet.animation['PROGRESS'], [], [])
                 time.sleep(0.5)
             else:
                 answer = YES
             
             if answer == YES:
                 self.person = name
-                self.say(THANK_YOU)
+                self.say(OK)
                 
             elif answer == NO:
                 self.recogniseByUserName(TELL_NAME)
@@ -115,11 +118,11 @@ class Robot:
         while not self.personRegistered:
             self.say(text)
             result = self.listen_for(RECOGNISE_CONTENT)
+            print('listning: {0}'.format(result))
             self.say(CONFIRM_NAME.format(result))
 
             if not VIRTUAL_ROBOT:
-                answer = self.tablet.ask(YES, NO)
-                self.tablet.show(ANIMATION['PROGRESS'])
+                answer = self.magic_tablet.ask([(True, YES), (False, NO)])
                 time.sleep(0.5)
             else:
                 answer = YES
@@ -158,18 +161,14 @@ class Robot:
                 - if choose item was pressed, it will display available items and when pressed it will show the item details
     '''
     def startTablet(self):
-        if not VIRTUAL_ROBOT:
-            self.tablet.show(ANIMATION['WAVE'], HI, SCAN_ITEM_OR_TALK)
-            answer = self.tablet.ask(SCAN_ITEM, CHOOSE_ITEM)
-            
-            self.tablet.show(ANIMATION['TICK'])
-            time.sleep(0.5)
-            
-            if answer == SCAN_ITEM:
-                self.scanItem()
-            else:
-                response = self.tablet.ask(self.items[:3])
-                self.findAndDisplayItem(response)
+        self.magic_tablet.show(self.magic_tablet.animation('WAVE_HELLO'), HI, SCAN_ITEM_OR_TALK)
+        answer = self.magic_tablet.ask([(True, SCAN_ITEM)])
+        
+        self.magic_tablet.show(self.magic_tablet.animation("TICK"), [], [])
+        time.sleep(0.5)
+
+        if answer:
+            self.scanItem()
 
     def say(self, message):
         self.tts.say(message)
@@ -181,13 +180,15 @@ class Robot:
         - If the classifed value is available, display details
     '''
     def scanItem(self):
-        current_frame, encoded_image = self.get_frame(self.imagePath.format('item'))
+        path = self.imagePath.format('item')
+
+        current_frame, encoded_image = self.get_frame(path)
         print('Encoded image: {0}'.format(encoded_image))
 
         imageSrc = IMAGE_SCANNED_HTML.format(encoded_image)
     
         if not VIRTUAL_ROBOT:
-            self.tablet.htmlDisplay(imageSrc)
+            self.magic_tablet.html(imageSrc, {})
 
         self.say(ITEM_SCANNED)
         
@@ -215,22 +216,22 @@ class Robot:
     def displayProduct(self, item):
         productName = item['productName']
         productPrice = item['productPrice']
+        aisleNumber = item['aisleNumber']
 
         line1 = ITEM_AVAILABLE.format(productName)
-        line2 = AISLE.format(productName, productPrice)
+        line2 = AISLE.format(aisleNumber, productPrice)
         
         message = line1 + line2
 
         self.say(message)
 
-        if not VIRTUAL_ROBOT:
-            self.tablet.display(ANIMATION['TICK'], line1, line2)
-            self.findAnotherItem()
+        #self.magic_tablet.show(self.magic_tablet.animation('TICK'), line1, line2)
+        #self.findAnotherItem()
 
 
     def outOfStock(self, item):
         self.say(NOT_IN_STOCK.format(item))
-        self.findAnotherItem()
+        #self.findAnotherItem()
 
     '''
         - Displays 2 buttons, Find another item and thank you.
@@ -238,17 +239,14 @@ class Robot:
     '''
     def findAnotherItem(self):
         if not VIRTUAL_ROBOT:
-            answer = self.tablet.ask(FIND_ANOTHER_ITEM, THANK_YOU)
+            answer = self.magic_tablet.ask([(True,FIND_ANOTHER_ITEM), (False, THANK_YOU)])
 
-            self.tablet.show(ANIMATION['TICK'])
-            time.sleep(0.5)
-
-            if answer is FIND_ANOTHER_ITEM:
+            if answer:
                 self.startTablet()
             else:
-                self.tablet.show(ANIMATION['UNCROSS_HANDS'], random.choice(BYE))
-                self.stop_listening()
                 self.say(random.choice(BYE))
+                #self.magic_tablet.show(self.magic_tablet.animation('UNCROSS_HANDS'), random.choice(BYE), [])
+                self.stop_listening()
 
     def conceptStringFormat(self, data):
         string = ''
@@ -301,7 +299,7 @@ class Robot:
             self.dialog.unloadTopic(topic)
 
 
-    def get_frame(self, imagePath, camera_idx=0, resolution_idx=1, colorspace_idx=11, fps=20):
+    def get_frame(self, imagePath, camera_idx=0, resolution_idx=3, colorspace_idx=11, fps=20):
         if not self.video_proxy.isCameraOpen(camera_idx):
             self.video_proxy.openCamera(camera_idx)
 
@@ -342,6 +340,7 @@ class Robot:
                 temp = np.frombuffer(buffer_image, im_format)
                 np_image = np.reshape(temp, img_shape)
                 #mpimg.imsave(imagePath, np_image)
+
                 print('image scanned: {0}'.format(imagePath))
                 cv2.imwrite(imagePath, np_image)
                 

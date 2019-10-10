@@ -23,7 +23,7 @@ class Store:
             {
                 "productName":"orange",
                 "productPrice":1.99,
-                "aisleNumber":1,
+                "aisleNumber":6,
                 "productStock":200
             },
 
@@ -44,14 +44,14 @@ class Store:
             {
                 "productName":"pizza",
                 "productPrice":2.99,
-                "aisleNumber":1,
+                "aisleNumber":5,
                 "productStock":200
             },
 
             {
                 "productName":"laptop",
                 "productPrice":2.99,
-                "aisleNumber":1,
+                "aisleNumber":2,
                 "productStock":200
             },
 
@@ -65,7 +65,7 @@ class Store:
             {
                 "productName":"donut",
                 "productPrice":2.99,
-                "aisleNumber":1,
+                "aisleNumber":3,
                 "productStock":200
             },
 

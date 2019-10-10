@@ -1,6 +1,6 @@
-VIRTUAL_ROBOT = True
-REAL_ROBOT_IP = '192.168.1.41:9559'
-VIRTUAL_ROBOT_IP = 'localhost:45023'
+VIRTUAL_ROBOT = False
+REAL_ROBOT_IP = '192.168.1.21:9559'
+VIRTUAL_ROBOT_IP = 'localhost:38713'
 
 IMAGE_PATH = '/Model/img/{0}.jpg'
 
@@ -10,7 +10,7 @@ ROBOT_GREET = ['Hello there, what are you looking for today?', 'Hey human, how m
 SCAN = ['take picture', 'scan item', 'scan picture', 'scan', 'picture', 'take pic']
 DETECT = ['detect', 'what is my name', 'who am i', 'do you know me', 'do you know who i am']
 LOOK = ["I am looking for _*", "looking for _*"]
-BYE = ['bye', 'goodbye', 'see ya', 'see ya later', 'laters', 'have a good day', 'goodnight', 'enjoy your day']
+BYE = ['bye', 'goodbye', 'see ya', 'see you later', 'laters', 'have a good day', 'goodnight', 'enjoy your day']
 LOOK_FOR = 'looking for'
 ROBOT_CONFUSED = ['Sorry, I dont understand.', 'I am not sure what you said', 'What?', 'Please repeat that', 'Sorry, I didnt get that', 'What did you just say?', 'I am unable to process that', 'I dont get it', "I am confused"]
 YES = 'YES'
@@ -30,6 +30,7 @@ NOT_IN_STOCK = 'Sorry, {0} may be not in stock.'
 OBJECT_NOT_DETECTED = "Object not detected, please try again."
 THANK_YOU = 'Thank you'
 FOR = 'for'
+OK = 'Okay'
 
 # Awareness
 PERSON_DETECTED = 'Person has been detected, recognising now'

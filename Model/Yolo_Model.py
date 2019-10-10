@@ -40,6 +40,7 @@ class Model:
 
     def detectImage(self):
         try:
+            print('\nImage location: {0}'.format(self.image_path))
             original_img = cv2.imread(self.image_path)
             original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
             self.result = self.tfnet.return_predict(original_img)
@@ -51,7 +52,6 @@ class Model:
             return False
 
     def classifyImage(self):
-        print('\nImage location: {0}'.format(self.image_path))
         print("Total objects detected: {0}".format(len(self.result)))
 
         itemsFound = []
